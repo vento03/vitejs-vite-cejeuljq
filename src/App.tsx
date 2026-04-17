@@ -19,7 +19,9 @@ try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  appId = 'gearshop-os'; // ID tĩnh cho database của bạn
+  
+  // Đổi ID mới để tạo một kho dữ liệu hoàn toàn sạch sẽ (bỏ qua dữ liệu mẫu cũ)
+  appId = 'gearshop-os-official'; 
 } catch (e) {
   console.error("Lỗi khởi tạo máy chủ đồng bộ", e);
 }
@@ -48,19 +50,14 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const getNow = () => new Date().toLocaleString('vi-VN');
 const getTodayStr = () => new Date().toLocaleDateString('vi-VN');
 
-// --- DỮ LIỆU MẪU KHI MỚI KHỞI TẠO LẦN ĐẦU ---
+// --- DỮ LIỆU KHỞI TẠO SẠCH (0đ) ---
 const initialAccounts = [
   { id: 'cake', name: 'Cake (Nhận tiền từ khách)', balance: 0, order: 1 },
-  { id: 'vietinbank', name: 'Vietinbank (Tiền nhập hàng)', balance: 10000000, order: 2 },
+  { id: 'vietinbank', name: 'Vietinbank (Tiền nhập hàng)', balance: 0, order: 2 },
   { id: 'mbank', name: 'MBank (Tiền lãi)', balance: 0, order: 3 },
 ];
 
-const initialProducts = [
-  { id: 'p1', name: 'Bàn phím cơ Keychron K8 Pro', category: 'Bàn phím', importPrice: 1500000, salePrice: 2200000, stock: 15, variant: 'Blue Switch / Đen', timestamp: Date.now() },
-  { id: 'p2', name: 'Chuột Logitech G102', category: 'Chuột', importPrice: 300000, salePrice: 450000, stock: 4, variant: 'Đen', timestamp: Date.now() + 1 },
-  { id: 'p3', name: 'Bộ Keycap PBT Olivia', category: 'Keycap', importPrice: 500000, salePrice: 850000, stock: 10, variant: 'Cherry Profile', timestamp: Date.now() + 2 },
-  { id: 'p4', name: 'Switch Akko V3 Cream Yellow', category: 'Switch', importPrice: 4500, salePrice: 7000, stock: 450, variant: 'Linear (Hộp 45c)', timestamp: Date.now() + 3 },
-];
+const initialProducts = []; // Không còn hàng mẫu
 
 export default function App() {
   // --- STATE ---
@@ -134,7 +131,7 @@ export default function App() {
     
     unsubs.push(onSnapshot(collection(db, userPath, 'products'), (snap) => {
       const data = snap.docs.map(d => d.data());
-      if(data.length === 0) {
+      if(data.length === 0 && initialProducts.length > 0) {
         initialProducts.forEach(p => setDoc(doc(db, userPath, 'products', p.id), p));
       } else {
         setProducts(data.sort((a: any, b: any) => b.timestamp - a.timestamp));
@@ -528,6 +525,9 @@ export default function App() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
+            {products.length === 0 && (
+              <tr><td colSpan="5" className="p-8 text-center text-gray-500">Chưa có sản phẩm nào. Hãy bấm "Thêm SP" để bắt đầu.</td></tr>
+            )}
             {products.map(p => (
               <tr key={p.id} className="hover:bg-gray-50/50 transition">
                 <td className="p-4">
